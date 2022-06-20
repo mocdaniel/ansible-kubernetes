@@ -1,4 +1,8 @@
 ---
+- name: Debug distro
+  debug:
+    var: ansible_distribution
+
 - name: Install needed packages
   dnf:
     name: "{{ item }}"
@@ -6,7 +10,7 @@
   loop:
     - yum-plugin-versionlock
     - python3
-    - libselinux-python
+    - python3-libselinux
 
 - name: Check if the system has swap enabled
   stat:
@@ -62,30 +66,15 @@
   meta: flush_handlers
 
 - name: Add Docker repository
-  block: 
-    - name: Add Docker repository on Rockylinux8
-      yum_repository:
-        name: docker-ce-stable
-        description: Docker CE Stable - $basearch
-        baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
-        enabled: yes
-        gpgcheck: yes
-        gpgkey: https://download.docker.com/linux/centos/gpg
-        exclude:
-          - containerd.io
-      when: ansible_distribution == 'Rockylinux'
-
-    - name: Add Docker repository on RHEL8
-      yum_repository:
-        name: docker-ce-stable
-        description: Docker CE Stable - $basesearch
-        baseurl: https://download.docker.com/linux/centos/$releasever/$basesearch/stable
-        enabled: yes
-        gpgcheck: yes
-        gpgkey: https://download.docker.com/linux/rhel/gpg
-        exclude:
-          - containerd.io
-      when: ansible_distribution == 'RHEL'
+  yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+    enabled: yes
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    exclude:
+      - containerd.io
 
 - name: Install containerd
   yum:
@@ -128,7 +117,7 @@
 
 - name: Install Kubernetes components
   dnf:
-    name: "{{ item }}-1.23.6-0.aarch64"
+    name: "{{ item }}-{{ kubernetes_version }}.{{ ansible_architecture }}"
     state: present
     disable_excludes: kubernetes
   loop:
