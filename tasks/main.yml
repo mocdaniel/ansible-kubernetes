@@ -6,6 +6,7 @@
   loop:
     - yum-plugin-versionlock
     - python3
+    - libselinux-python
 
 - name: Check if the system has swap enabled
   stat:
@@ -51,11 +52,6 @@
     sysctl_set: yes
     state: present
     reload: yes
-
-- name: Install selinux module via pip
-  pip:
-    name: selinux
-    state: present
 
 - name: Set SELinux in permissive mode and disable it
   ansible.posix.selinux:
