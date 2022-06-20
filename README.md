@@ -2,7 +2,7 @@
 
 This Ansible role prepares hosts for running Kubernetes clusters on them:
 
-- [x] Disables swap
+- [x] Disables swap if necessary
 - [X] Adds kernel modules and changes network settings
 - [x] Disables SELinux if necessary
 - [x] Installs [containerd](https://containerd.io)
@@ -40,6 +40,8 @@ An example playbook could look like this:
 - hosts: raspberries
   gather_facts: yes
   become: yes
+  vars:
+    kubernetes_version: 1.22.3-0
   roles:
   - role: ansible-kubernetes
 ```
@@ -71,7 +73,7 @@ ansible-playbook book.yml -i hosts.ini --extra-vars="ansible_sudo_pass=rockylinu
 
 ## Contributing
 
-You'd like to add to this Ansible role by adding more provisioning, configurability, different distros etc.? You're more than welcome! Open **issues** or **feature requests** using the respective issue templates or add to the repository yourself and create a **pull request**!
+Open **issues** or **feature requests** using the respective issue templates or add to the repository yourself and create a **pull request**!
 
 ### Development setup
 
