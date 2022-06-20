@@ -11,6 +11,7 @@ This Ansible role prepares hosts for running Kubernetes clusters on them:
 It currently works for the following distributions:
 
 - [x] [RockyLinux8](https://rockylinux.org)
+- [x] (probably) [RHEL8](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8) 
 
 ## Usage:
 
