@@ -23,10 +23,10 @@
     masked: yes
   when: "'firewalld' in services"
 
-- name: Check if the system has modules-load.d 
+- name: Check if the system has modules loaded
   stat:
     path: /etc/modules-load.d
-  register: modules-load
+  register: modules_load
 
 - name: Add br_netfilter module
   copy:
