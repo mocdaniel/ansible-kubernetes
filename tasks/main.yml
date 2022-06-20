@@ -1,0 +1,148 @@
+---
+- name: Disable swap permanently
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw.*\s+.*)$'
+    replace: '# \1'
+  notify: Reboot
+
+- name: Disable firewalld permanently
+  systemd:
+    name: firewalld
+    enabled: no
+    state: stopped
+    masked: yes
+
+- name: Add br_netfilter module
+  copy:
+    content: br_netfilter
+    dest: /etc/modules-load.d/br_netfilter.conf
+    mode: u=rw,g=,o=
+  notify: Reboot
+
+- name: Enable ip_forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+- name: Set SELinux in permissive mode and disable it
+  ansible.posix.selinux:
+    state: disabled
+  notify: Reboot
+
+- name: Reboot if needed
+  meta: flush_handlers
+
+- name: Install yum utilities
+  dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - yum-plugin-versionlock
+
+- name: Add Docker repository
+  block: 
+    - name: Add Docker repository on Rockylinux8
+      yum_repository:
+        name: docker-ce-stable
+        description: Docker CE Stable - $basearch
+        baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: https://download.docker.com/linux/centos/gpg
+        exclude:
+          - containerd.io
+      when: ansible_distribution == 'Rockylinux'
+
+    - name: Add Docker repository on RHEL8
+      yum_repository:
+        name: docker-ce-stable
+        description: Docker CE Stable - $basesearch
+        baseurl: https://download.docker.com/linux/centos/$releasever/$basesearch/stable
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: https://download.docker.com/linux/rhel/gpg
+        exclude:
+          - containerd.io
+      when: ansible_distribution == 'RHEL'
+
+- name: Install containerd
+  yum:
+    name: containerd.io
+    state: present
+    disable_excludes: docker-ce-stable
+
+- name: Pin version of containerd
+  community.general.dnf_versionlock:
+    name: containerd
+    state: present
+
+- name: Enable CRI plugin for containerd
+  lineinfile:
+    path: /etc/containerd/config.toml
+    state: absent
+    line: 'disabled_plugins = ["cri"]'
+
+- name: Enable and start containerd
+  systemd:
+    name: containerd
+    state: started
+    enabled: yes
+
+- name: Add Kubernetes repository
+  yum_repository:
+    name: kubernetes
+    description: Kubernetes
+    baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-$basearch
+    enabled: yes
+    gpgcheck: yes
+    repo_gpgcheck: yes
+    gpgkey:
+      - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+      - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg 
+    exclude:
+      - kubeadm
+      - kubectl
+      - kubelet
+
+- name: Install Kubernetes components
+  dnf:
+    name: "{{ item }}-1.23.6-0.aarch64"
+    state: present
+    disable_excludes: kubernetes
+  loop:
+    - kubeadm
+    - kubectl
+    - kubelet
+
+- name: Pin version of kubeadm
+  community.general.dnf_versionlock:
+    name: kubeadm
+    state: present
+
+- name: Pin version of kubectl
+  community.general.dnf_versionlock:
+    name: kubectl
+    state: present
+
+- name: Pin version of kubelet
+  community.general.dnf_versionlock:
+    name: kubelet
+    state: present
+
+- name: Enable and start kubelet
+  systemd:
+    name: kubelet
+    enabled: yes
+    state: started
+
+# - name: Initialize Kubernetes cluster
+#   command: |
+#     kubeadm init
+#     --pod-network-cidr={{ kubernetes_cidr }}
+#     --ignore-preflight-errors=NumCPU
+#     --apiserver-cert-extra-sans={{ ansible_host }}
+#   when: "'master' in group_names"

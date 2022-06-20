@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: "Include ansible_kubernetes"
+      include_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
