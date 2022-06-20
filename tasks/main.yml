@@ -1,4 +1,12 @@
 ---
+- name: Install needed packages
+  dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - yum-plugin-versionlock
+    - python3
+
 - name: Check if the system has swap enabled
   stat:
     path: /etc/fstab
@@ -44,6 +52,11 @@
     state: present
     reload: yes
 
+- name: Install selinux module via pip
+  pip:
+    name: selinux
+    state: present
+
 - name: Set SELinux in permissive mode and disable it
   ansible.posix.selinux:
     state: disabled
@@ -51,13 +64,6 @@
 
 - name: Reboot if needed
   meta: flush_handlers
-
-- name: Install yum utilities
-  dnf:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - yum-plugin-versionlock
 
 - name: Add Docker repository
   block: 
