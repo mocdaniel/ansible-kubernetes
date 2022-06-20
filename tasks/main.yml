@@ -4,6 +4,9 @@
     path: /etc/fstab
   register: fstab
 
+- name: Populate service facts
+  service_facts:
+
 - name: Disable swap permanently
   replace:
     path: /etc/fstab
@@ -17,7 +20,8 @@
     name: firewalld
     enabled: no
     state: stopped
-#    masked: yes
+    masked: yes
+  when: "'firewalld' in services"
 
 - name: Add br_netfilter module
   copy:
