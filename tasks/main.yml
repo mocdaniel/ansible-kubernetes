@@ -1,10 +1,16 @@
 ---
+- name: Check if the system has swap enabled
+  stat:
+    path: /etc/fstab
+  register: fstab
+
 - name: Disable swap permanently
   replace:
     path: /etc/fstab
     regexp: '^([^#].*?\sswap\s+sw.*\s+.*)$'
     replace: '# \1'
   notify: Reboot
+  when: fstab.stat.exists 
 
 - name: Disable firewalld permanently
   systemd:
