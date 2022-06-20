@@ -23,12 +23,18 @@
     masked: yes
   when: "'firewalld' in services"
 
+- name: Check if the system has modules-load.d 
+  stat:
+    path: /etc/modules-load.d
+  register: modules-load
+
 - name: Add br_netfilter module
   copy:
     content: br_netfilter
     dest: /etc/modules-load.d/br_netfilter.conf
     mode: u=rw,g=,o=
   notify: Reboot
+  when: modules_load.stat.exists
 
 - name: Enable ip_forwarding
   ansible.posix.sysctl:
