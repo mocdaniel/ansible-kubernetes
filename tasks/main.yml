@@ -1,8 +1,4 @@
 ---
-- name: Debug distro
-  debug:
-    var: ansible_distribution
-
 - name: Install needed packages
   dnf:
     name: "{{ item }}"
@@ -60,10 +56,7 @@
 - name: Set SELinux in permissive mode and disable it
   ansible.posix.selinux:
     state: disabled
-  notify: Reboot
-
-- name: Reboot if needed
-  meta: flush_handlers
+failed_when: No
 
 - name: Add Docker repository
   yum_repository:
